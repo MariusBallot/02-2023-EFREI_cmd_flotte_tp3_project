@@ -45,8 +45,12 @@ kF = 1.0  # **** A MODIFIER EN TP ****
 # control gain for consensus
 kp = 1.0  # **** A MODIFIER EN TP ****
 
+
+#Initialisation du distThreshold a 1. C'est à dire quand la moyenne de la distance entre les robots est inférieur à 1,
+#  nous passons au mode leader-follower par la variable distflag.
 distThreshold = 1
 distflag = False
+targetPoint = np.array([[0], [-10]])
 
 ui = 0
 # main loop of simulation
@@ -54,18 +58,21 @@ for t in simulation.t:
 
     # computation for each robot of the fleet
     if distflag :
+        #MODE LEADER-FOLLOWER
         for i in range(0, fleet.nbOfRobots):
         
             u = np.array([[0], [0]])
         
             if(i == 0):
-                u = kL*(np.array([[0], [-10]]) - fleet.robot[i].state)
+                u = kL*(targetPoint - fleet.robot[i].state)
             else :
                 u = kF*((fleet.robot[0].state+rRef[i]) - fleet.robot[i].state)
 
             fleet.robot[i].ctrl = u
         
     else :
+        #MODE CONSENSUS AVEC CALCUL DE DISTANCE MOYENNE
+
         distAvg = 0
         for i in range(0, fleet.nbOfRobots):
             ui = 0
@@ -76,12 +83,12 @@ for t in simulation.t:
                 ui += -(fleet.robot[i].state-fleet.robot[j].state)
                 fleet.robot[i].ctrl = kp*ui  # **** A COMPLETER EN TP **** #
                 if j != i :
-                    dist = math.sqrt(pow(fleet.robot[i].state[0] - fleet.robot[j].state[0], 2)+pow(fleet.robot[i].state[1] - fleet.robot[j].state[1], 2))
+                    dist = math.sqrt(pow(fleet.robot[i].state[0] - fleet.robot[j].state[0], 2)+
+                                     pow(fleet.robot[i].state[1] - fleet.robot[j].state[1], 2))
                     dists.append(dist)
                     distAvg+=min(dists)
         
             distAvg /= fleet.nbOfRobots
-            print(distAvg)
             if distAvg < distThreshold :
                 distflag = True
         
